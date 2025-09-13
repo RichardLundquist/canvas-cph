@@ -1,0 +1,23 @@
+@font-face {
+  font-family: Adwaita;
+  src: url("./assets/fonts/AdwaitaMono-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Adwaita;
+  src: url("./assets/fonts/AdwaitaMono-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: bold;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Sligoil;
+  src: url("./assets/fonts/Sligoil-Micro.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

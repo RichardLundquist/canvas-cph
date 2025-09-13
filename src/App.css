@@ -1,0 +1,28 @@
+@import url("fonts.css");
+@import "tailwindcss";
+
+@theme {
+  --font-sligoil: Sligoil, "serif";
+}
+
+@layer base {
+  body {
+    @apply font-sligoil bg-[#FDFDFD];
+  }
+
+  h1 {
+    @apply text-[5.6rem] md:text-[8rem];
+  }
+  h2 {
+    @apply text-[4rem] md:text-[5.6rem];
+  }
+  h3 {
+    @apply text-[2.8rem] md:text-[4rem];
+  }
+  h4 {
+    @apply text-[2rem] md:text-[2.8rem];
+  }
+  h5 {
+    @apply text-[1.4rem] md:text-[2rem];
+  }
+}

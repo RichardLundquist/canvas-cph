@@ -97,19 +97,19 @@ function App() {
     night16,
     day16,
     timeBlendFactor,
-    128
+    32
   );
   const cloudBlended = generateBlendedColors(
     timeBlended,
     cloudyDay16,
     rainBlendFactor,
-    128
+    32
   );
   const finalBlended = generateBlendedColors(
     cloudBlended,
     rain16,
     cloudBlendFactor,
-    128
+    32
   );
 
   // Helper function to convert a hex color to an RGB object
@@ -159,87 +159,104 @@ function App() {
     return rgbToHex(r, g, b);
   }
 
+  const [openEditor, setOpenEditor] = useState(false);
+
   return (
     <main>
-      <div className="p-12 space-y-8">
+      <div className="p-2 md:p-8 space-y-8">
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between">
+          <div className="flex flex-wrap justify-between">
             <h3>copenhagen</h3>
             <h3>weather</h3>
           </div>
 
           <h4>{`${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h4>
 
-          <div className="flex justify-between w-full">
-            <div className="flex gap-2">
+          <div className="flex md:flex-row flex-col justify-between w-full">
+            <div className="flex flex-wrap gap-2">
               {temp?.value && <p>{`Degrees: ${temp.value}C`}</p>}
               {cloudCover && <p>{`Clouds: ${cloudCover.value}%`}</p>}
               {rain && <p>{`Rain: ${rain.value}%`}</p>}
             </div>
-            <p>Data from DMI</p>
+            <a className="opacity-50" href="https://www.dmi.dk/">Data from DMI</a>
           </div>
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap rounded-lg overflow-hidden gap-1">
+          <div className="grid grid-cols-4 rounded-lg overflow-hidden gap-1">
             {finalBlended.map((col, i) => (
               <div
-                className="h-24 w-24"
+                className="h-24 w-full"
                 key={i}
                 style={{ background: col }}
               ></div>
             ))}
           </div>
 
-          <div className="flex flex-col gap-1 max-w-screen-sm rounded-lg p-4 bg-[#e8e9ea]">
-            <div>
-              <label className="block mb-2 font-bold">
-                Cloud Cover: {(cloudBlendFactor * 100).toFixed(0)}%
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                defaultValue={cloudBlendFactor}
-                value={cloudBlendFactor}
-                onChange={(e) => setCloudBlendFactor(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block mb-2 font-bold">
-                Rain: {(rainBlendFactor * 100).toFixed(0)}%
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                defaultValue={rainBlendFactor}
-                value={rainBlendFactor}
-                onChange={(e) => setRainBlendFactor(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-            <div>
-              <label className="block mb-2 font-bold">
-                Current hour: {currentTime.getHours()}
-              </label>
-              <input
-                type="range"
-                min={0}
-                max={24}
-                step={1}
-                value={currentTime.getHours()}
-                onChange={(e) =>
-                  setCurrentTime(
-                    new Date(new Date().setHours(Number(e.target.value)))
-                  )
-                }
-                className="w-full"
-              />
-            </div>
+         {/*  <div className="flex flex-col rounded-lg overflow-hidden gap-1">
+            {finalBlended.map((col, i) => (
+              <div
+                className="h-24 w-full ro"
+                key={i}
+                style={{ background: col }}
+              ></div>
+            ))}
+          </div> */}
+
+          <div className="space-y-4 max-w-screen-sm rounded-lg p-4  bg-[#e8e9ea]">
+            <button className="bg-blue-400 p-2 rounded-md hover:cursor-pointer" onClick={() => setOpenEditor(!openEditor)}>Editor<span>{openEditor ? "-" : "+"}</span></button>
+            {openEditor && <div className="flex flex-col gap-1">
+              <div>
+                <label className="block mb-2 font-bold">
+                  Cloud Cover: {(cloudBlendFactor * 100).toFixed(0)}%
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  defaultValue={cloudBlendFactor}
+                  value={cloudBlendFactor}
+                  onChange={(e) => setCloudBlendFactor(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 font-bold">
+                  Rain: {(rainBlendFactor * 100).toFixed(0)}%
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  defaultValue={rainBlendFactor}
+                  value={rainBlendFactor}
+                  onChange={(e) => setRainBlendFactor(Number(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <label className="block mb-2 font-bold">
+                  Current hour: {currentTime.getHours()}
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={24}
+                  step={1}
+                  value={currentTime.getHours()}
+                  onChange={(e) =>
+                    setCurrentTime(
+                      new Date(new Date().setHours(Number(e.target.value)))
+                    )
+                  }
+                  className="w-full"
+                />
+              </div>
+            </div>}
+
+            
           </div>
         </div>
       </div>

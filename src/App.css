@@ -2,27 +2,29 @@
 @import "tailwindcss";
 
 @theme {
+  --font-adwaita: Adwaita, "sans-serif", "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
   --font-sligoil: Sligoil, "serif";
 }
 
 @layer base {
   body {
-    @apply font-sligoil bg-[#FDFDFD];
+    @apply font-adwaita bg-[#FDFDFD];
   }
 
   h1 {
-    @apply text-[5.6rem] md:text-[8rem];
+    @apply font-sligoil text-[5.6rem] md:text-[8rem];
   }
   h2 {
-    @apply text-[4rem] md:text-[5.6rem];
+    @apply font-sligoil text-[4rem] md:text-[5.6rem];
   }
   h3 {
-    @apply text-[2.8rem] md:text-[4rem];
+    @apply font-sligoil text-[2.8rem] md:text-[4rem];
   }
   h4 {
-    @apply text-[2rem] md:text-[2.8rem];
+    @apply font-sligoil text-[2rem] md:text-[2.8rem];
   }
   h5 {
-    @apply text-[1.4rem] md:text-[2rem];
+    @apply font-sligoil text-[1.4rem] md:text-[2rem];
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { cloudyDay16, day16, night16, rain16 } from "./assets/colors";
 
@@ -60,17 +60,12 @@ function App() {
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  function getTimeBlendFactor() {
-    const hour = currentTime.getHours() + currentTime.getMinutes() / 60;
-    // Day: 8am-8pm (8-20), Night: 8pm-8am (20-8)
-    if (hour < 12) {
-      // Midnight to noon: 0 -> 1
-      return hour / 12;
-    } else {
-      // Noon to midnight: 1 -> 0
-      return (24 - hour) / 12;
-    }
-  }
+  const resetAllValues = () => {
+    setCloudBlendFactor(cloudCover ? Math.min(cloudCover.value / 100, 1) : 0);
+    setRainBlendFactor(rain ? Math.min(rain.value / 2, 1) : 0);
+    setCurrentTime(new Date());
+  };
+
   function generateBlendedColors(
     arr1: string[],
     arr2: string[],
@@ -91,25 +86,31 @@ function App() {
     return result;
   }
 
-  const timeBlendFactor = getTimeBlendFactor();
+  const timeBlendFactor = useMemo(() => {
+    const hour = currentTime.getHours() + currentTime.getMinutes() / 60;
+    // Day: 8am-8pm (8-20), Night: 8pm-8am (20-8)
+    if (hour < 12) {
+      // Midnight to noon: 0 -> 1
+      return hour / 12;
+    } else {
+      // Noon to midnight: 1 -> 0
+      return (24 - hour) / 12;
+    }
+  }, [currentTime]);
 
-  const timeBlended = generateBlendedColors(
-    night16,
-    day16,
-    timeBlendFactor,
-    32
+  const timeBlended = useMemo(
+    () => generateBlendedColors(night16, day16, timeBlendFactor, 32),
+    [timeBlendFactor]
   );
-  const cloudBlended = generateBlendedColors(
-    timeBlended,
-    cloudyDay16,
-    rainBlendFactor,
-    32
+
+  const cloudBlended = useMemo(
+    () => generateBlendedColors(timeBlended, cloudyDay16, rainBlendFactor, 32),
+    [timeBlended, rainBlendFactor]
   );
-  const finalBlended = generateBlendedColors(
-    cloudBlended,
-    rain16,
-    cloudBlendFactor,
-    32
+
+  const finalBlended = useMemo(
+    () => generateBlendedColors(cloudBlended, rain16, cloudBlendFactor, 32),
+    [cloudBlended, cloudBlendFactor]
   );
 
   // Helper function to convert a hex color to an RGB object
@@ -162,101 +163,117 @@ function App() {
   const [openEditor, setOpenEditor] = useState(false);
 
   return (
-    <main>
-      <div className="p-2 md:p-8 space-y-8">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap justify-between">
-            <h3>copenhagen</h3>
-            <h3>weather</h3>
-          </div>
-
-          <h4>{`${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h4>
-
-          <div className="flex md:flex-row flex-col justify-between w-full">
-            <div className="flex flex-wrap gap-2">
-              {temp?.value && <p>{`Degrees: ${temp.value}C`}</p>}
-              {cloudCover && <p>{`Clouds: ${cloudCover.value}%`}</p>}
-              {rain && <p>{`Rain: ${rain.value}%`}</p>}
+    <main className="w-full flex flex-col items-center">
+      <div className="w-full max-w-4xl">
+        <div className="p-2 md:p-8 space-y-6 md:space-y-8">
+          <div className="flex flex-col">
+            <div className="flex flex-wrap justify-between">
+              <h3>copenhagen</h3>
+              <h3>weather</h3>
             </div>
-            <a className="opacity-50" href="https://www.dmi.dk/">Data from DMI</a>
+
+          <div className="space-y-4">
+            <h5>{`${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h5>
+
+            <div className="flex md:flex-row flex-col gap-4 justify-between w-full uppercase text-sm">
+              <div className="flex flex-wrap gap-2">
+                <p>Degrees {temp?.value && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${temp.value}C`}</span>}</p>
+
+                <p>Clouds {cloudCover && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${cloudCover.value}%`}</span>}</p>
+
+                <p>Rain {rain && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${rain.value}%`}</span>}</p>
+
+                
+              </div>
+              <a className="opacity-50" href="https://www.dmi.dk/">
+                Data from DMI
+              </a>
+            </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col gap-6">
-          <div className="grid grid-cols-4 rounded-lg overflow-hidden gap-1">
-            {finalBlended.map((col, i) => (
-              <div
-                className="h-24 w-full"
-                key={i}
-                style={{ background: col }}
-              ></div>
-            ))}
-          </div>
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-4 rounded-lg overflow-hidden gap-1">
+              {finalBlended.map((col, i) => (
+                <div
+                  className="h-24 w-full"
+                  key={i}
+                  style={{ background: col }}
+                ></div>
+              ))}
+            </div>
 
-         {/*  <div className="flex flex-col rounded-lg overflow-hidden gap-1">
-            {finalBlended.map((col, i) => (
-              <div
-                className="h-24 w-full ro"
-                key={i}
-                style={{ background: col }}
-              ></div>
-            ))}
-          </div> */}
-
-          <div className="space-y-4 max-w-screen-sm rounded-lg p-4  bg-[#e8e9ea]">
-            <button className="bg-blue-400 p-2 rounded-md hover:cursor-pointer" onClick={() => setOpenEditor(!openEditor)}>Editor<span>{openEditor ? "-" : "+"}</span></button>
-            {openEditor && <div className="flex flex-col gap-1">
-              <div>
-                <label className="block mb-2 font-bold">
-                  Cloud Cover: {(cloudBlendFactor * 100).toFixed(0)}%
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={cloudBlendFactor}
-                  value={cloudBlendFactor}
-                  onChange={(e) => setCloudBlendFactor(Number(e.target.value))}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-bold">
-                  Rain: {(rainBlendFactor * 100).toFixed(0)}%
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  defaultValue={rainBlendFactor}
-                  value={rainBlendFactor}
-                  onChange={(e) => setRainBlendFactor(Number(e.target.value))}
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-bold">
-                  Current hour: {currentTime.getHours()}
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={24}
-                  step={1}
-                  value={currentTime.getHours()}
-                  onChange={(e) =>
-                    setCurrentTime(
-                      new Date(new Date().setHours(Number(e.target.value)))
-                    )
-                  }
-                  className="w-full"
-                />
-              </div>
-            </div>}
-
-            
+            <div className="space-y-4 max-w-screen-sm rounded-lg ">
+              <button
+                className="hover:cursor-pointer border px-4 py-3 rounded-md"
+                onClick={() => setOpenEditor(!openEditor)}
+              >
+                <span>EDIT</span>
+                <span>{openEditor ? "-" : "+"}</span>
+              </button>
+              {openEditor && (
+                <div className="flex flex-col gap-1 border p-4 rounded-md uppercase text-sm">
+                  <div className="">
+                    <label className="">
+                      Cloud Cover: {(cloudBlendFactor * 100).toFixed(0)}%
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      defaultValue={cloudBlendFactor}
+                      value={cloudBlendFactor}
+                      onChange={(e) =>
+                        setCloudBlendFactor(Number(e.target.value))
+                      }
+                      className="w-full bg-gray-600 h-1 rounded-full appearance-none hover:cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className=" mb-2 ">
+                      Rain: {(rainBlendFactor * 100).toFixed(0)}%
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      defaultValue={rainBlendFactor}
+                      value={rainBlendFactor}
+                      onChange={(e) =>
+                        setRainBlendFactor(Number(e.target.value))
+                      }
+                      className="w-full bg-gray-600 h-1 rounded-full appearance-none hover:cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-2">
+                      Current hour: {currentTime.getHours()}
+                    </label>
+                    <input
+                      type="range"
+                      min={0}
+                      max={24}
+                      step={1}
+                      value={currentTime.getHours()}
+                      onChange={(e) =>
+                        setCurrentTime(
+                          new Date(new Date().setHours(Number(e.target.value)))
+                        )
+                      }
+                      className="w-full bg-gray-600 h-1 rounded-full appearance-none hover:cursor-pointer"
+                    />
+                  </div>
+                  <button
+                    className="px-4 py-2 border rounded-lg bg-red-300 self-start hover:cursor-pointer"
+                    onClick={resetAllValues}
+                  >
+                    RESET
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

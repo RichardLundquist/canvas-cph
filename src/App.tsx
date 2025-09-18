@@ -11,15 +11,16 @@ type DataElementType = {
 function App() {
   const [apiData, setApiData] = useState<DataElementType[]>();
 
-  const url =
-    "https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?period=latest&stationId=06180&limit=100&bbox-crs=https%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FOGC%2F1.3%2FCRS84&api-key=5d305213-5974-45d2-a603-cd3e04a6958e";
+  const apiKey = import.meta.env.VITE_DMI_API_KEY;
+  const url = `https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?period=latest&stationId=06180&limit=100&bbox-crs=https%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FOGC%2F1.3%2FCRS84&api-key=${apiKey}`;
+
 
   const fetchData = async () => {
     try {
       const response = await fetch(url);
       const data = await response.json();
 
-      const weatherData: DataElementType[] = data.features.map((f) => ({
+      const weatherData: DataElementType[] = data.features.map((f: { properties: DataElementType }) => ({
         parameterId: f.properties.parameterId,
         value: f.properties.value,
         observed: f.properties.observed,
@@ -31,8 +32,7 @@ function App() {
     } catch (error) {
       console.error("Error fetching DMI API data:", error);
       throw new Response(
-        `Failed to fetch DMI API data: ${
-          error instanceof Error ? error.message : String(error)
+        `Failed to fetch DMI API data: ${error instanceof Error ? error.message : String(error)
         }`,
         {
           status: 500,
@@ -74,6 +74,7 @@ function App() {
   ): string[] {
     const result: string[] = [];
     for (let i = 0; i < count; i++) {
+      // handles colors arrays of different lengths
       const idx1 = Math.floor((i * arr1.length) / count);
       const idx2 = Math.floor((i * arr2.length) / count);
       const color1 = arr1[idx1];
@@ -98,22 +99,26 @@ function App() {
     }
   }, [currentTime]);
 
+  // creates an interpolated mix of colors based on time of day (darker at night, lighter at day)
   const timeBlended = useMemo(
     () => generateBlendedColors(night16, day16, timeBlendFactor, 32),
     [timeBlendFactor]
   );
 
+  // creates an interpolated mix of colors based on cloud cover (more gray with more clouds)
   const cloudBlended = useMemo(
     () => generateBlendedColors(timeBlended, cloudyDay16, rainBlendFactor, 32),
     [timeBlended, rainBlendFactor]
   );
 
+  // creates an interpolated mix of colors based on rain (more blue with more rain)
   const finalBlended = useMemo(
     () => generateBlendedColors(cloudBlended, rain16, cloudBlendFactor, 32),
     [cloudBlended, cloudBlendFactor]
   );
 
-  // Helper function to convert a hex color to an RGB object
+
+  // Helper function to convert a hex color to an RGB object (easier to manipulate than hexidecimals)
   function hexToRgb(hex: string): { r: number; g: number; b: number } {
     if (!hex || typeof hex !== "string") return { r: 0, g: 0, b: 0 };
     hex = hex.replace(/^#/, "");
@@ -145,7 +150,7 @@ function App() {
     );
   }
 
-  // Function to interpolate between two colors
+  // Function to interpolate between two colors, creates a gradient based on two colors and factor (0 to 1)
   function interpolateColor(
     color1: string,
     color2: string,
@@ -172,23 +177,23 @@ function App() {
               <h3>weather</h3>
             </div>
 
-          <div className="space-y-4">
-            <h5>{`${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h5>
+            <div className="space-y-4">
+              <h5>{`${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h5>
 
-            <div className="flex md:flex-row flex-col gap-4 justify-between w-full uppercase text-sm">
-              <div className="flex flex-wrap gap-2">
-                <p>Degrees {temp?.value && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${temp.value}C`}</span>}</p>
+              <div className="flex md:flex-row flex-col gap-4 justify-between w-full uppercase text-sm">
+                <div className="flex flex-wrap gap-2">
+                  <p>Degrees {temp?.value && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${temp.value}C`}</span>}</p>
 
-                <p>Clouds {cloudCover && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${cloudCover.value}%`}</span>}</p>
+                  <p>Clouds {cloudCover && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${cloudCover.value}%`}</span>}</p>
 
-                <p>Rain {rain && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${rain.value}%`}</span>}</p>
+                  <p>Rain {rain && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${rain.value}%`}</span>}</p>
 
-                
+
+                </div>
+                <a className="opacity-50" href="https://www.dmi.dk/">
+                  Data from DMI
+                </a>
               </div>
-              <a className="opacity-50" href="https://www.dmi.dk/">
-                Data from DMI
-              </a>
-            </div>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-![alt text](screenshots/cphwthr.png "Screenshot of the visualization in use")
+![alt text](screenshots/canvascph.png "Screenshot of the visualization in use")
 
 # Copenhagen weather
 

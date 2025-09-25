@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { cloudyDay16, day16, night16, rain16 } from "./assets/colors";
+import { ArrowUpRight, RotateCcwIcon } from "lucide-react";
 
 type DataElementType = {
   observed: string;
@@ -11,20 +12,37 @@ type DataElementType = {
 function App() {
   const [apiData, setApiData] = useState<DataElementType[]>();
 
+  const temp = apiData?.find((p) => p.parameterId === "temp_dry");
+  const cloudCover = apiData?.find((p) => p.parameterId === "cloud_cover");
+  const rain = apiData?.find((p) => p.parameterId === "precip_past10min");
+
+  const [cloudBlendFactor, setCloudBlendFactor] = useState(
+    cloudCover ? Math.min(cloudCover.value / 100, 1) : 0
+  );
+
+  const [rainBlendFactor, setRainBlendFactor] = useState(
+    rain ? Math.min(rain.value / 2, 1) : 0
+  );
+
   const apiKey = import.meta.env.VITE_DMI_API_KEY;
   const url = `https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?period=latest&stationId=06180&limit=100&bbox-crs=https%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FOGC%2F1.3%2FCRS84&api-key=${apiKey}`;
-
 
   const fetchData = async () => {
     try {
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Failed to fetch data from mini-backend");
+      }
+
       const data = await response.json();
 
-      const weatherData: DataElementType[] = data.features.map((f: { properties: DataElementType }) => ({
-        parameterId: f.properties.parameterId,
-        value: f.properties.value,
-        observed: f.properties.observed,
-      }));
+      const weatherData: DataElementType[] = data.features.map(
+        (f: { properties: DataElementType }) => ({
+          parameterId: f.properties.parameterId,
+          value: f.properties.value,
+          observed: f.properties.observed,
+        })
+      );
 
       setApiData(weatherData);
 
@@ -32,7 +50,8 @@ function App() {
     } catch (error) {
       console.error("Error fetching DMI API data:", error);
       throw new Response(
-        `Failed to fetch DMI API data: ${error instanceof Error ? error.message : String(error)
+        `Failed to fetch DMI API data: ${
+          error instanceof Error ? error.message : String(error)
         }`,
         {
           status: 500,
@@ -46,17 +65,8 @@ function App() {
     fetchData();
   }, []);
 
-  const temp = apiData?.find((p) => p.parameterId === "temp_dry");
-  const cloudCover = apiData?.find((p) => p.parameterId === "cloud_cover");
-  const rain = apiData?.find((p) => p.parameterId === "precip_past10min");
+  
 
-  const [cloudBlendFactor, setCloudBlendFactor] = useState(
-    cloudCover ? Math.min(cloudCover.value / 100, 1) : 0
-  );
-
-  const [rainBlendFactor, setRainBlendFactor] = useState(
-    rain ? Math.min(rain.value / 2, 1) : 0
-  );
 
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -100,6 +110,7 @@ function App() {
   }, [currentTime]);
 
   // creates an interpolated mix of colors based on time of day (darker at night, lighter at day)
+
   const timeBlended = useMemo(
     () => generateBlendedColors(night16, day16, timeBlendFactor, 32),
     [timeBlendFactor]
@@ -170,38 +181,42 @@ function App() {
   return (
     <main className="w-full flex flex-col items-center">
       <div className="w-full max-w-4xl">
-        <div className="p-2 md:p-8 space-y-6 md:space-y-8">
-          <div className="flex flex-col">
-            <div className="flex flex-wrap justify-between">
-              <h3>copenhagen</h3>
-              <h3>weather</h3>
-            </div>
-
+        <div className="p-2 md:p-8 space-y-4 md:space-y-8">
+          <div className="flex flex-col gap-2 md:gap-4">
+            <h5>{`canvas:cph ${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h5>
             <div className="space-y-4">
-              <h5>{`${currentTime.toLocaleTimeString()} ${currentTime.toLocaleDateString()}`}</h5>
-
-              <div className="flex md:flex-row flex-col gap-4 justify-between w-full uppercase text-sm">
+              <div className="flex md:flex-row flex-col gap-4  uppercase text-sm">
                 <div className="flex flex-wrap gap-2">
-                  <p>Degrees {temp?.value && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${temp.value}C`}</span>}</p>
+                  <p>
+                    Degrees{" "}
+                    {temp?.value && (
+                      <span className="bg-gray-200 rounded-sm py-1 px-2">{`${temp.value}C`}</span>
+                    )}
+                  </p>
 
-                  <p>Clouds {cloudCover && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${cloudCover.value}%`}</span>}</p>
+                  <p>
+                    Clouds{" "}
+                    {cloudCover && (
+                      <span className="bg-gray-200 rounded-sm py-1 px-2">{`${cloudCover.value}%`}</span>
+                    )}
+                  </p>
 
-                  <p>Rain {rain && <span className="bg-gray-200 rounded-sm py-1 px-2">{`${rain.value}%`}</span>}</p>
-
-
+                  <p>
+                    Rain{" "}
+                    {rain && (
+                      <span className="bg-gray-200 rounded-sm py-1 px-2">{`${rain.value}%`}</span>
+                    )}
+                  </p>
                 </div>
-                <a className="opacity-50" href="https://www.dmi.dk/">
-                  Data from DMI
-                </a>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4 md:gap-6">
             <div className="grid grid-cols-4 rounded-lg overflow-hidden gap-1">
               {finalBlended.map((col, i) => (
                 <div
-                  className="h-24 w-full"
+                  className="h-18 md:h-24 w-full"
                   key={i}
                   style={{ background: col }}
                 ></div>
@@ -210,14 +225,14 @@ function App() {
 
             <div className="space-y-4 max-w-screen-sm rounded-lg ">
               <button
-                className="hover:cursor-pointer border px-4 py-3 rounded-md"
+                className="hover:cursor-pointer uppercase text-sm  rounded-md"
                 onClick={() => setOpenEditor(!openEditor)}
               >
                 <span>EDIT</span>
                 <span>{openEditor ? "-" : "+"}</span>
               </button>
               {openEditor && (
-                <div className="flex flex-col gap-1 border p-4 rounded-md uppercase text-sm">
+                <div className="flex flex-col gap-2 bg-gray-200 p-4 rounded-md uppercase text-sm">
                   <div className="">
                     <label className="">
                       Cloud Cover: {(cloudBlendFactor * 100).toFixed(0)}%
@@ -270,12 +285,23 @@ function App() {
                       className="w-full bg-gray-600 h-1 rounded-full appearance-none hover:cursor-pointer"
                     />
                   </div>
-                  <button
-                    className="px-4 py-2 border rounded-lg bg-red-300 self-start hover:cursor-pointer"
-                    onClick={resetAllValues}
-                  >
-                    RESET
-                  </button>
+                  <div className="flex justify-between">
+                    <button
+                      className="px-4 py-2  rounded-lg bg-black text-white self-start hover:cursor-pointer flex items-center gap-1"
+                      onClick={resetAllValues}
+                    >
+                      RESET
+                      <RotateCcwIcon size={16} />
+                    </button>
+                    <a
+                      target="_blank"
+                      className=" flex gap-1 items-center"
+                      href="https://www.dmi.dk/"
+                    >
+                      <span>Data</span>
+                      <ArrowUpRight size={16} />
+                    </a>
+                  </div>
                 </div>
               )}
             </div>

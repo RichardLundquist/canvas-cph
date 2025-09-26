@@ -12,17 +12,22 @@ type DataElementType = {
 function App() {
   const [apiData, setApiData] = useState<DataElementType[]>();
 
-  const temp = apiData?.find((p) => p.parameterId === "temp_dry");
+  /* const temp = apiData?.find((p) => p.parameterId === "temp_dry");
   const cloudCover = apiData?.find((p) => p.parameterId === "cloud_cover");
-  const rain = apiData?.find((p) => p.parameterId === "precip_past10min");
+  const rain = apiData?.find((p) => p.parameterId === "precip_past10min"); */
 
-  const [cloudBlendFactor, setCloudBlendFactor] = useState(
-    cloudCover ? Math.min(cloudCover.value / 100, 1) : 0
-  );
+  let temp:DataElementType | undefined;
+  let cloudCover: DataElementType | undefined;
+  let rain: DataElementType | undefined;
 
-  const [rainBlendFactor, setRainBlendFactor] = useState(
-    rain ? Math.min(rain.value / 2, 1) : 0
-  );
+  const [cloudBlendFactor, setCloudBlendFactor] = useState(0);
+
+  const [rainBlendFactor, setRainBlendFactor] = useState(0);
+
+  /* useEffect(() => {
+    setCloudBlendFactor(cloudCover ? Math.min(cloudCover.value / 100, 1) : 0);
+    setRainBlendFactor(rain ? Math.min(rain.value / 2, 1) : 0);
+  },[apiData]); */
 
   const apiKey = import.meta.env.VITE_DMI_API_KEY;
   const url = `https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?period=latest&stationId=06180&limit=100&bbox-crs=https%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FOGC%2F1.3%2FCRS84&api-key=${apiKey}`;
@@ -45,6 +50,12 @@ function App() {
       );
 
       setApiData(weatherData);
+      temp = weatherData?.find((p) => p.parameterId === "temp_dry");
+      cloudCover = weatherData?.find((p) => p.parameterId === "cloud_cover");
+      rain = weatherData?.find((p) => p.parameterId === "precip_past10min");
+
+      if (cloudCover)setCloudBlendFactor(Math.min(cloudCover.value / 100, 1));
+      if(rain)setRainBlendFactor(Math.min(rain.value / 2, 1));
 
       return weatherData;
     } catch (error) {
@@ -64,8 +75,6 @@ function App() {
   useEffect(() => {
     fetchData();
   }, []);
-
-  
 
 
   const [currentTime, setCurrentTime] = useState(new Date());

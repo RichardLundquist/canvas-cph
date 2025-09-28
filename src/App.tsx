@@ -10,18 +10,19 @@ type DataElementType = {
 };
 
 function App() {
- //const [apiData, setApiData] = useState<DataElementType[]>();
-  
-  let temp:DataElementType | undefined;
-  let cloudCover: DataElementType | undefined;
-  let rain: DataElementType | undefined;
+  const [apiData, setApiData] = useState({
+    temp: 0,
+    rain: 0,
+    cloudCover: 0,
+  });
 
   const [cloudBlendFactor, setCloudBlendFactor] = useState(0);
-
   const [rainBlendFactor, setRainBlendFactor] = useState(0);
-
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const apiKey = import.meta.env.VITE_DMI_API_KEY;
+  const apiKey2 = 0;
+
   const url = `https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?period=latest&stationId=06180&limit=100&bbox-crs=https%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FOGC%2F1.3%2FCRS84&api-key=${apiKey}`;
 
   const fetchData = async () => {
@@ -41,13 +42,18 @@ function App() {
         })
       );
 
-      //setApiData(weatherData);
-      temp = weatherData?.find((p) => p.parameterId === "temp_dry");
-      cloudCover = weatherData?.find((p) => p.parameterId === "cloud_cover");
-      rain = weatherData?.find((p) => p.parameterId === "precip_past10min");
+      const temp =
+        weatherData?.find((p) => p.parameterId === "temp_dry")?.value ?? 0;
+      const cloudCover =
+        weatherData?.find((p) => p.parameterId === "cloud_cover")?.value ?? 0;
+      const rain =
+        weatherData?.find((p) => p.parameterId === "precip_past10min")?.value ??
+        0;
 
-      if (cloudCover)setCloudBlendFactor(Math.min(cloudCover.value / 100, 1));
-      if(rain)setRainBlendFactor(Math.min(rain.value / 2, 1));
+      setCloudBlendFactor(Math.min(cloudCover / 100, 1));
+      setRainBlendFactor(Math.min(rain / 2, 1));
+
+      setApiData({ temp, cloudCover, rain });
 
       return weatherData;
     } catch (error) {
@@ -69,11 +75,9 @@ function App() {
   }, []);
 
 
-  const [currentTime, setCurrentTime] = useState(new Date());
-
   const resetAllValues = () => {
-    setCloudBlendFactor(cloudCover ? Math.min(cloudCover.value / 100, 1) : 0);
-    setRainBlendFactor(rain ? Math.min(rain.value / 2, 1) : 0);
+    setCloudBlendFactor(Math.min(apiData?.cloudCover / 100, 1));
+    setRainBlendFactor(Math.min(apiData?.rain / 2, 1));
     setCurrentTime(new Date());
   };
 
@@ -128,7 +132,6 @@ function App() {
     () => generateBlendedColors(cloudBlended, rain16, cloudBlendFactor, 32),
     [cloudBlended, cloudBlendFactor]
   );
-
 
   // Helper function to convert a hex color to an RGB object (easier to manipulate than hexidecimals)
   function hexToRgb(hex: string): { r: number; g: number; b: number } {
@@ -190,23 +193,17 @@ function App() {
                 <div className="flex flex-wrap gap-2">
                   <p>
                     Degrees{" "}
-                    {temp?.value && (
-                      <span className="bg-gray-200 rounded-sm py-1 px-2">{`${temp.value}C`}</span>
-                    )}
+                    <span className="bg-gray-200 rounded-sm py-1 px-2">{`${apiData?.temp}C`}</span>
                   </p>
 
                   <p>
                     Clouds{" "}
-                    {cloudCover && (
-                      <span className="bg-gray-200 rounded-sm py-1 px-2">{`${cloudCover.value}%`}</span>
-                    )}
+                    <span className="bg-gray-200 rounded-sm py-1 px-2">{`${apiData?.cloudCover}%`}</span>
                   </p>
 
                   <p>
                     Rain{" "}
-                    {rain && (
-                      <span className="bg-gray-200 rounded-sm py-1 px-2">{`${rain.value}%`}</span>
-                    )}
+                    <span className="bg-gray-200 rounded-sm py-1 px-2">{`${apiData?.rain}%`}</span>
                   </p>
                 </div>
               </div>

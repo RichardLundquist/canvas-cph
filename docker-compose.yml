@@ -1,0 +1,16 @@
+services:
+  app:
+    container_name: cphcanvas
+    build: .
+    restart: always
+    ports:
+      # For server, change this to export: - "8000"
+      - "8000:8000"
+    environment:
+      - DMI_API_KEY=${DMI_API_KEY}
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

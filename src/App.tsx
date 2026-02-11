@@ -20,19 +20,11 @@ function App() {
   const [rainBlendFactor, setRainBlendFactor] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  const apiKey = import.meta.env.VITE_DMI_API_KEY;
-
-  const station = {
-    botaniskHave1: "05735",
-    kbhLufthavn: "06180",
-    kbhToldbod: "06187",
-  };
-
-  const url = `https://dmigw.govcloud.dk/v2/metObs/collections/observation/items?stationId=${station.kbhLufthavn}&period=latest-10-minutes&bbox-crs=https%3A%2F%2Fwww.opengis.net%2Fdef%2Fcrs%2FOGC%2F1.3%2FCRS84&api-key=${apiKey}`;
-
   const fetchData = async () => {
     try {
-      const response = await fetch(url);
+
+      const response = await fetch("/api");
+
       if (!response.ok) {
         throw new Error("Failed to fetch data from mini-backend");
       }
@@ -46,6 +38,7 @@ function App() {
           observed: f.properties.observed,
         }),
       );
+
 
       const temp =
         weatherData?.find((p) => p.parameterId === "temp_dry")?.value ?? 0;
